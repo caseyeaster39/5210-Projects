@@ -1,4 +1,5 @@
 import random
+import numpy as np
 
 
 class Robot:
@@ -28,10 +29,10 @@ class Robot:
             'right':    '*',
         }
         self.moves = {
-            'up':       [-1, 0],
-            'down':     [1, 0],
-            'left':     [0, -1],
-            'right':    [0, 1],
+            'up':       np.array([-1, 0]),
+            'down':     np.array([1, 0]),
+            'left':     np.array([0, -1]),
+            'right':    np.array([0, 1]),
         }
         self.first_lap = [
             'right',
@@ -83,55 +84,69 @@ class Robot:
         self.best_path = []
 
     def new_episode(self, environment):
-        self.orders = order_gen()                                                       # Generate orders
-        self.complete = False                                                           # Initialize episode values
-        self.position = [0, 0]
+        self.orders = order_gen()                                                   # Generate orders
+        self.complete = False                                                       # Initialize episode values
+        self.position = np.array([0, 0])
         self.current_path = [[0, 0]]
         self.score = 0
         self.episode += 1
 
-        self.search_pattern(environment, path=self.first_lap)                           # Start first lap
+        self.search_pattern(environment, path=self.first_lap)                       # Start first lap
 
-        while not self.complete:                                                        # Continue loop until
-            self.search_pattern(environment, path=self.back_path)                           # all items are found
+        while not self.complete:                                                    # Continue loop until
+            self.search_pattern(environment, path=self.back_path)                       # all items are found
             self.search_pattern(environment, path=self.forward_path)
 
-    def search_pattern(self, environment, path):                                        # Step through environment
-        for step in path:                                                               # Path contains "steps"
-            self.move(step, environment)                                                # Move method called
-            self.look_around(environment)                                               # View surroundings
-            self.check_error()                                                          # Error rates from prompt
-            self.check_orders(environment)                                              # Check surrounding shelves
+    def search_pattern(self, environment, path):                                    # Step through environment
+        for step in path:                                                           # Path contains "steps"
+            self.move(step, environment)                                            # Move method called
+            self.look_around(environment)                                           # View surroundings
+            self.check_error()                                                      # Error rates from prompt
+            self.check_orders(environment)                                          # Check surrounding shelves
             if self.complete:
                 break
 
-    def move(self, direction, environment):                                             # Accepts a step (direction)
-        self.position += self.moves[direction]                                          # Add step to robot position
-        self.score += 3 if environment[self.position] in self.orders else -1            # Assess score from new position
-        self.current_path.append(self.position)                                         # Store new position
+    def move(self, direction, environment):                                         # Accepts a step (direction)
+        self.position += self.moves[direction]                                      # Add step to robot position
+        if environment[self.position[0]][self.position[1]] in self.orders:          # Assess score from new position
+            self.score += 3
+        else:
+            self.score -= 1
+        self.current_path.append(list(self.position))                               # Store new position
 
-    def look_around(self, environment):                                                 # Read from "sensors"
-        self.surroundings['up'] = environment[self.position + self.moves['up']]
-        self.surroundings['down'] = environment[self.position + self.moves['down']]
-        self.surroundings['left'] = environment[self.position + self.moves['left']]
-        self.surroundings['right'] = environment[self.position + self.moves['right']]
+    def look_around(self, environment):                                             # Read from "sensors"
+        sensor_position = {
+            'up': self.position + self.moves['up'],
+            'down': self.position + self.moves['down'],
+            'left': self.position + self.moves['left'],
+            'right': self.position + self.moves['right']
+        }
+
+        for sensor in self.surroundings:
+            try:
+                if sensor_position[sensor][0] < 0 or sensor_position[sensor][1] < 0:
+                    self.surroundings[sensor] = '*'
+                else:
+                    self.surroundings[sensor] = environment[sensor_position[sensor][0]][sensor_position[sensor][1]]
+            except IndexError:
+                self.surroundings[sensor] = '*'
 
     def check_error(self):
-        false_pos = random.randint(1, 100)                                              # Generate each type of error
+        false_pos = random.randint(1, 100)                                          # Generate each type of error
         false_neg = random.randint(1, 100)
 
-        if false_pos <= self.false_positive_rate:                                       # False positive
-            self.surroundings[random.choice(list(self.surroundings))] = 'fake'          # Places a random fake "shelf"
+        if false_pos <= self.false_positive_rate:                                   # False positive
+            self.surroundings[random.choice(list(self.surroundings))] = 'fake'      # Places a random fake "shelf"
 
-        if false_neg <= self.false_negative_rate:                                       # False negative
-            self.surroundings[random.choice(list(self.surroundings))] = '*'             # Places a random fake "empty"
+        if false_neg <= self.false_negative_rate:                                   # False negative
+            self.surroundings[random.choice(list(self.surroundings))] = '*'         # Places a random fake "empty"
 
     def check_orders(self, environment):
-        for item in self.orders:                                                        # If a required item from the
-            if item in self.surroundings and item not in self.items:                    # order list is adjacent,
-                self.retrieve(item, environment)                                        # Retrieve it
-        if 'fake' in self.surroundings:                                                 # Same process for fake but is
-            self.retrieve('fake', environment)                                          # handled in retrieve method
+        for item in self.orders:                                                    # If a required item from the
+            if item in self.surroundings.values() and item not in self.items:       # order list is adjacent,
+                self.retrieve(item, environment)                                    # Retrieve it
+        if 'fake' in self.surroundings:                                             # Same process for fake but is
+            self.retrieve('fake', environment)                                      # handled in retrieve method
 
     def retrieve(self, item, environment):
         for direction, shelf in self.surroundings.items():                          # From surroundings,
@@ -142,7 +157,7 @@ class Robot:
                     if self.check_complete():                                       # check if orders completed
                         self.finish_episode()                                       # finish episode if completed
                     else:
-                        back = direction * -1                                       # otherwise, move back
+                        back = direction_flip(direction)                                       # otherwise, move back
                         self.move(back, environment)
                 else:
                     fake_shelf = random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
@@ -173,10 +188,29 @@ class Robot:
                 self.min_score = self.score
                 self.worst_path = self.best_path
         self.complete = True
+        print(f'End of episode {self.episode}')
 
 
 def map_initialize():
-    return []   # TODO: map
+    cord_dict = {
+        'A': [1, 1],
+        'B': [2, 2],
+        'C': [1, 3],
+        'D': [2, 0],
+        'E': [0, 2],
+        'F': [2, 4],
+        'G': [4, 1],
+        'H': [5, 4],
+        'J': [3, 5],
+        'I': [4, 2]
+    }
+    empty_arr = np.array([['*' for i in range(6)] for j in range(6)])
+
+    # Each time loop runs "letter is different key from dict.
+    for letter, (x_pos, y_pos) in cord_dict.items():    # "letter" represents key of dictionary.
+        empty_arr[y_pos][x_pos] = letter                # Key Value ("letter") is placed into empty_arr using x and y
+
+    return empty_arr
 
 
 def order_gen():
@@ -184,6 +218,19 @@ def order_gen():
     random.shuffle(orders)                                                          # Shuffle order of orders
     order_set = [orders[x] for x in range(random.randint(1, 10))]                   # Random orders (1-10 in total)
     return order_set
+
+
+def direction_flip(direction):
+    if direction == 'up':
+        return 'down'
+    elif direction == 'down':
+        return 'up'
+    elif direction == 'left':
+        return 'right'
+    elif direction == 'right':
+        return 'left'
+    else:
+        return None
 
 
 def main():                                                                         # Main function
