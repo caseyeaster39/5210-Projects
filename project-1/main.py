@@ -86,6 +86,7 @@ class Robot:
     def new_episode(self, environment):
         self.orders = order_gen()                                                   # Generate orders
         self.complete = False                                                       # Initialize episode values
+        self.items = []
         self.position = np.array([0, 0])
         self.current_path = [[0, 0]]
         self.score = 0
@@ -101,7 +102,6 @@ class Robot:
         for step in path:                                                           # Path contains "steps"
             self.move(step, environment)                                            # Move method called
             self.look_around(environment)                                           # View surroundings
-            self.check_error()                                                      # Error rates from prompt
             self.check_orders(environment)                                          # Check surrounding shelves
             if self.complete:
                 break
@@ -122,8 +122,10 @@ class Robot:
             'right': self.position + self.moves['right']
         }
 
+        self.check_error()                                                          # Error rates from prompt
+
         for sensor in self.surroundings:
-            try:
+            try:                                                                    # Wall finding, shows empty cell
                 if sensor_position[sensor][0] < 0 or sensor_position[sensor][1] < 0:
                     self.surroundings[sensor] = '*'
                 else:
@@ -157,7 +159,7 @@ class Robot:
                     if self.check_complete():                                       # check if orders completed
                         self.finish_episode()                                       # finish episode if completed
                     else:
-                        back = direction_flip(direction)                                       # otherwise, move back
+                        back = direction_flip(direction)                            # otherwise, move back
                         self.move(back, environment)
                 else:
                     fake_shelf = random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])
@@ -188,7 +190,6 @@ class Robot:
                 self.min_score = self.score
                 self.worst_path = self.best_path
         self.complete = True
-        print(f'End of episode {self.episode}')
 
 
 def map_initialize():
@@ -220,7 +221,7 @@ def order_gen():
     return order_set
 
 
-def direction_flip(direction):
+def direction_flip(direction):                                                      # Ugly fix
     if direction == 'up':
         return 'down'
     elif direction == 'down':
@@ -233,6 +234,17 @@ def direction_flip(direction):
         return None
 
 
+def report_printout(robot):
+    print('\n##############################\n')
+    print(f'Average Score: {robot.avg_score}')                                      # Print results
+    print(f'Maximum Score: {robot.max_score}')
+    print(f'Minimum Score: {robot.min_score}')
+
+    baseline_score = 4 * len(robot.orders) - 35                                     # Brute force score,
+    print(f'\nBaseline Score: {baseline_score}')                                    # per Dr. Pears
+    print('\n##############################\n')
+
+
 def main():                                                                         # Main function
     environment = map_initialize()                                                  # Create map
     robot = Robot(1000)                                                             # Initialize robot
@@ -240,12 +252,7 @@ def main():                                                                     
     for i in range(robot.episodes):                                                 # Perform episodes
         robot.new_episode(environment)                                              # Start new episode
 
-    print(f'Average Score: {robot.avg_score}')                                      # Print results
-    print(f'Maximum Score: {robot.max_score}')
-    print(f'Minimum Score: {robot.min_score}')
-
-    baseline_score = 4 * len(robot.orders) - 35                                     # Brute force score,
-    print(f'Baseline Score: {baseline_score}')                                      # per Dr. Pears
+    report_printout(robot)
 
 
 if __name__ == '__main__':                                                          # Python best practices
