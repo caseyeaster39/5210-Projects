@@ -1,3 +1,4 @@
+import random
 
 
 def report_printout(robot):
@@ -22,3 +23,7 @@ def direction_flip(direction):                                                  
         return 'left'
     else:
         return None
+
+
+def fake_shelf():
+    return random.choice(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'])

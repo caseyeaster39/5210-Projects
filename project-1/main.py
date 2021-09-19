@@ -3,7 +3,7 @@ import robot_class
 
 
 def main():                                                                         # Main function
-    robot = robot_class.Robot(1000, 'path')                                         # Initialize robot
+    robot = robot_class.Robot(1000, 'random')                                       # Initialize robot
     robot.start_procedure()                                                         # Run episodes
 
     project_utils.report_printout(robot)                                            # Print results
