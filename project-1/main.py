@@ -8,7 +8,6 @@ def main():                                                                     
     robot.start_procedure()                                                         # Run episodes
 
     project_utils.report_printout(robot)                                            # Print results
-    project_utils.display_results(robot)                                            # Display paths
 
 
 if __name__ == '__main__':                                                          # Python best practices

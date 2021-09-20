@@ -87,6 +87,8 @@ def report_printout(robot):
     print(f'\nBaseline Score: {baseline_score}')                                        # per Dr. Pears
     print('\n##############################\n')
 
+    display_results(robot)                                                              # Display paths
+
 
 def direction_flip(direction):                                                          # Ugly solution
     if direction == 'up':
