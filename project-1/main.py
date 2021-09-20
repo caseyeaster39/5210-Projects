@@ -3,7 +3,8 @@ import robot_class
 
 
 def main():                                                                         # Main function
-    robot = robot_class.Robot(1000, protocol='random', layout='a')                  # Initialize robot
+    # Edit number of episodes, 'random' or 'path' protocol, and layout 'a' or 'b'
+    robot = robot_class.Robot(episodes=1000, protocol='random', layout='a')         # Initialize robot
 
     robot.start_procedure()                                                         # Run episodes
 
