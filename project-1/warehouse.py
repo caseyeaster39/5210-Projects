@@ -2,10 +2,15 @@ import random
 import numpy as np
 
 
-def order_gen():
-    orders = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']                     # Possible orders
+def order_gen(warehouse):
+    if warehouse == 'a':
+        orders = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J']
+    else:
+        orders = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                  'I', 'J', 'K', 'M', 'N', 'O', 'P', 'Q']
+
     random.shuffle(orders)                                                          # Shuffle order of orders
-    order_set = [orders[x] for x in range(random.randint(1, 10))]                   # Random orders (1-10 in total)
+    order_set = [orders[x] for x in range(random.randint(1, len(orders)))]          # Random orders
     return order_set
 
 

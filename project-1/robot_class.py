@@ -98,7 +98,7 @@ class Robot:
             self.new_episode()                                                      # Start new episode
 
     def new_episode(self):
-        self.orders = wh.order_gen()                                                # Generate orders
+        self.orders = wh.order_gen(self.warehouse)                                  # Generate orders
         self.complete = False                                                       # Initialize episode values
         self.items = []
         self.position = np.array([0, 0])
