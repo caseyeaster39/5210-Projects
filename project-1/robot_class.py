@@ -115,7 +115,8 @@ class Robot:
             self.search_pattern(environment, path=self.first_lap)                   # Start first lap
             while not self.complete:                                                # Continue loop until
                 self.search_pattern(environment, path=self.back_path)               # all items are found
-                self.search_pattern(environment, path=self.forward_path)
+                if not self.complete:                                               # bug fix
+                    self.search_pattern(environment, path=self.forward_path)
         elif self.protocol == 'random':                                             # For random protocol:
             self.search_pattern(environment)                                        # no path is passed to search
 
@@ -184,10 +185,10 @@ class Robot:
 
         for sensor in self.surroundings:
             try:                                                                    # Wall finding, shows empty cell
-                if sensor_position[sensor][0] < 0 or sensor_position[sensor][1] < 0:
-                    self.surroundings[sensor] = '*'
-                else:
+                if 0 <= sensor_position[sensor][0] <= 5 and 0 <= sensor_position[sensor][1] <= 5:
                     self.surroundings[sensor] = environment[sensor_position[sensor][0]][sensor_position[sensor][1]]
+                else:
+                    self.surroundings[sensor] = '*'
             except IndexError:
                 self.surroundings[sensor] = '*'
 
@@ -228,9 +229,8 @@ class Robot:
                     environment[self.position[0]][self.position[1]] = '*'           # do not reward future visits,
                     if self.check_complete():                                       # check if orders completed,
                         self.finish_episode()                                       # finish episode if completed
-                    else:
-                        back = project_utils.direction_flip(direction)              # if orders remain, move back
-                        self.move(back, environment)
+                    back = project_utils.direction_flip(direction)                  # if orders remain, move back
+                    self.move(back, environment)
                 else:
                     fake_shelf = wh.fake_shelf(self.warehouse)
                     if fake_shelf in self.orders and fake_shelf not in self.items:  # If the fake is a target shelf,
