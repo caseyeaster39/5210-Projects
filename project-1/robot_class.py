@@ -6,12 +6,13 @@ import numpy as np
 
 
 class Robot:
-    def __init__(self, episodes, protocol):
+    def __init__(self, episodes, protocol, layout):
         # Episode tracking
         self.episode = 0
         self.episodes = episodes
 
         # Order tracking
+        self.warehouse = layout
         self.orders = []
         self.items = []
         self.complete = False
@@ -40,6 +41,8 @@ class Robot:
             'left':     np.array([0, -1]),
             'right':    np.array([0, 1]),
         }
+
+        # Paths for path protocol (experimental)
         self.first_lap = [
             'right',
             'down',
@@ -84,6 +87,7 @@ class Robot:
         ]
 
         # Position tracking
+        self.environment = [[]]
         self.position = []
         self.current_path = [[0, 0]]
         self.worst_path = []
@@ -102,18 +106,18 @@ class Robot:
         self.score = 0
         self.episode += 1
 
-        environment = wh.map_initialize()                                           # Create map
+        self.environment = wh.map_initialize(self.warehouse)                        # Create map
 
-        self.movement_protocol(environment)
+        self.movement_protocol(self.environment)
 
     def movement_protocol(self, environment):
-        if self.protocol == 'path':
+        if self.protocol == 'path':                                                 # For path protocol:
             self.search_pattern(environment, path=self.first_lap)                   # Start first lap
             while not self.complete:                                                # Continue loop until
                 self.search_pattern(environment, path=self.back_path)               # all items are found
                 self.search_pattern(environment, path=self.forward_path)
-        elif self.protocol == 'random':
-            self.search_pattern(environment)
+        elif self.protocol == 'random':                                             # For random protocol:
+            self.search_pattern(environment)                                        # no path is passed to search
 
     def search_pattern(self, environment, path=None):                               # Step through environment
         if path:
@@ -124,22 +128,21 @@ class Robot:
                 if self.complete:
                     break
         else:
-            move_options = list(self.moves.keys())
-            while not self.complete:
-                self.adjacent = False
-                self.next_dir = 'none'
-                self.look_around(environment)
-                self.check_orders(environment)
+            move_options = list(self.moves.keys())                                  # Up, Down, Left, Right
+            while not self.complete:                                                # Until all items are found:
+                self.adjacent = False                                               # Robot hasn't sensed a target
+                self.next_dir = 'none'                                              # Robot hasn't decided a direction
+                self.look_around(environment)                                       # View surroundings
+                self.check_orders(environment)                                      # Check surrounding shelves
 
-                if self.adjacent:
-                    self.move(self.next_dir, environment)
-                    self.items.append(environment[self.position[0]][self.position[1]])
-                    environment[self.position[0]][self.position[1]] = '*'
-                else:
-                    random_dir = self.random_direction(move_options)
-                    self.move(random_dir, environment)
-
-                self.complete = self.check_complete()
+                if self.adjacent:                                                   # If a target is identified,
+                    self.move(self.next_dir, environment)                           # move to the target,
+                    self.items.append(environment[self.position[0]][self.position[1]])  # pick up target,
+                    environment[self.position[0]][self.position[1]] = '*'           # remove shelf from targets,
+                    self.complete = self.check_complete()                           # check if order list is complete.
+                else:                                                               # If no target is identified,
+                    random_dir = self.random_direction(move_options)                # get pseudo-random direction,
+                    self.move(random_dir, environment)                              # move to that direction.
             self.finish_episode()
 
     def move(self, direction, environment):                                         # Accepts a step (direction)
@@ -151,23 +154,23 @@ class Robot:
         self.current_path.append(list(self.position))                               # Store new position
 
     def random_direction(self, move_options):
-        direction_options = []
-        safe_options = []
-        curr_path = np.array(list(self.current_path))
-        for proposed_dir in move_options:
-            proposed_pos = self.position + self.moves[proposed_dir]
-            if 0 <= proposed_pos[0] <= 5 and 0 <= proposed_pos[1] <= 5:
-                safe_options.append(proposed_dir)
+        direction_options = []                                                      # Start with no options
+        safe_options = []                                                           # and no safe options
+        curr_path = self.current_path                                               # Get Current Path
+        for proposed_dir in move_options:                                           # For a given direction,
+            proposed_pos = self.position + self.moves[proposed_dir]                 # get the resultant position.
+            if 0 <= proposed_pos[0] <= 5 and 0 <= proposed_pos[1] <= 5:             # If that is a valid position,
+                safe_options.append(proposed_dir)                                   # add it to safe options,
                 indicator = True
-                for element in curr_path:
-                    if all(element == proposed_pos):
-                        indicator = False
-                if indicator:
-                    direction_options.append(proposed_dir)
-        if bool(direction_options):
-            return random.choice(direction_options)
-        else:
-            return random.choice(safe_options)
+                for element in curr_path:                                           # Of the visited cells,
+                    if all(element == proposed_pos):                                # if the proposed move is not new,
+                        indicator = False                                           # it is a visited cell.
+                if indicator:                                                       # If it is unvisited,
+                    direction_options.append(proposed_dir)                          # add it to the options too
+        if bool(direction_options):                                                 # If there are unvisited cells,
+            return random.choice(direction_options)                                 # move to one of them.
+        else:                                                                       # If all cells have been visited,
+            return random.choice(safe_options)                                      # move to a random valid position
 
     def look_around(self, environment):                                             # Read from "sensors"
         sensor_position = {
@@ -199,22 +202,22 @@ class Robot:
             self.surroundings[random.choice(list(self.surroundings))] = '*'         # Places a random fake "empty"
 
     def check_orders(self, environment):
-        if self.protocol == 'path':
+        if self.protocol == 'path':                                                 # For path protocol:
             for item in self.orders:                                                # If a required item from the
                 if item in self.surroundings.values() and item not in self.items:   # order list is adjacent,
                     self.retrieve(item, environment)                                # Retrieve it
             if 'fake' in self.surroundings:                                         # Same process for fake but is
                 self.retrieve('fake', environment)                                  # handled in retrieve method
         elif self.protocol == 'random':
-            for direction, value in self.surroundings.items():
-                if not self.adjacent:
-                    if value == 'fake':
-                        self.surroundings[direction] = project_utils.fake_shelf()
-                    for item in self.orders:
-                        if item == value and item not in self.items:
-                            self.adjacent = True
-                            self.next_dir = direction
-                            break
+            for direction, value in self.surroundings.items():                      # For random protocol:
+                if not self.adjacent:                                               # If a target has not been found,
+                    if value == 'fake':                                             # If there is a false positive
+                        self.surroundings[direction] = wh.fake_shelf(self.warehouse)    # Generate a fake shelf
+                    for item in self.orders:                                        # Otherwise, check for targets
+                        if item == value and item not in self.items:                # If there is a valid target
+                            self.adjacent = True                                    # Change indicator to True,
+                            self.next_dir = direction                               # Choose that target,
+                            break                                                   # and stop looking
 
     def retrieve(self, item, environment):
         for direction, shelf in self.surroundings.items():                          # From surroundings,
@@ -229,7 +232,7 @@ class Robot:
                         back = project_utils.direction_flip(direction)              # if orders remain, move back
                         self.move(back, environment)
                 else:
-                    fake_shelf = project_utils.fake_shelf()
+                    fake_shelf = wh.fake_shelf(self.warehouse)
                     if fake_shelf in self.orders and fake_shelf not in self.items:  # If the fake is a target shelf,
                         self.move(direction, environment)                           # try and fail to get the item
                         back = direction * -1
@@ -254,7 +257,5 @@ class Robot:
                 self.best_path = self.current_path
             if self.score < self.min_score:                                         # Worst score and path
                 self.min_score = self.score
-                self.worst_path = self.best_path
+                self.worst_path = self.current_path
         self.complete = True
-
-
