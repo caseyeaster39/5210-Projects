@@ -22,6 +22,10 @@ class Robot:
         self.max_score = 0
         self.min_score = 0
         self.avg_score = 0
+        self.baseline_score = 0
+        self.baseline_score_max = 0
+        self.baseline_score_min = 0
+        self.baseline_score_avg = 0
 
         # Environment navigation
         self.false_positive_rate = 10
@@ -246,16 +250,22 @@ class Robot:
 
     def finish_episode(self):                                                       # Update metrics
         self.avg_score = (self.avg_score * (self.episode - 1) + self.score) / self.episode
+        self.baseline_score = 4 * len(self.orders) - 35                             # Brute force score, per Dr. Pears
+        self.baseline_score_avg = (self.baseline_score_avg * (self.episode - 1) + self.baseline_score) / self.episode
         if self.episode == 1:                                                       # Initial values after episode 1
             self.max_score = self.score
+            self.baseline_score_max = self.baseline_score
             self.min_score = self.score
+            self.baseline_score_min = self.baseline_score
             self.best_path = self.current_path
             self.worst_path = self.current_path
         else:                                                                       # Update values if needed
             if self.score > self.max_score:                                         # Best score and path
                 self.max_score = self.score
+                self.baseline_score_max = self.baseline_score
                 self.best_path = self.current_path
             if self.score < self.min_score:                                         # Worst score and path
                 self.min_score = self.score
+                self.baseline_score_min = self.baseline_score
                 self.worst_path = self.current_path
         self.complete = True

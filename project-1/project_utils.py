@@ -79,12 +79,14 @@ def draw_grid():                                                                
 
 def report_printout(robot):
     print('\n##############################\n')
-    print(f'Average Score: {robot.avg_score}')                                          # Print results
-    print(f'Maximum Score: {robot.max_score}')
-    print(f'Minimum Score: {robot.min_score}')
+    print(f'Average Score: {round(robot.avg_score, 3)}')                                # Print results
+    print(f'Avg. Brute Force Score: {round(robot.baseline_score_avg, 3)}\n')
 
-    baseline_score = 4 * len(robot.orders) - 35                                         # Brute force score,
-    print(f'\nBaseline Score: {baseline_score}')                                        # per Dr. Pears
+    print(f'Maximum Score: {robot.max_score}')
+    print(f'Corresponding Brute Force Score: {robot.baseline_score_max}\n')
+
+    print(f'Minimum Score: {robot.min_score}')
+    print(f'Corresponding Brute Force Score: {robot.baseline_score_min}')
     print('\n##############################\n')
 
     display_results(robot)                                                              # Display paths
