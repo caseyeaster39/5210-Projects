@@ -140,10 +140,12 @@ class Robot:
                 self.look_around(environment)                                       # View surroundings
                 self.check_orders(environment)                                      # Check surrounding shelves
 
-                if self.adjacent:                                                   # If a target is identified,
-                    self.move(self.next_dir, environment)                           # move to the target,
-                    self.items.append(environment[self.position[0]][self.position[1]])  # pick up target,
-                    environment[self.position[0]][self.position[1]] = '*'           # remove shelf from targets,
+                if self.adjacent:                                                   # If an item is identified,
+                    self.move(self.next_dir, environment)                           # move to the spot,
+                    item = environment[self.position[0]][self.position[1]]
+                    if item in self.orders and item not in self.items:              # and if it is actually a target,
+                        self.items.append(item)                                     # pick up target,
+                        environment[self.position[0]][self.position[1]] = '*'       # remove shelf from targets,
                     self.complete = self.check_complete()                           # check if order list is complete.
                 else:                                                               # If no target is identified,
                     random_dir = self.random_direction(move_options)                # get pseudo-random direction,
@@ -160,14 +162,13 @@ class Robot:
 
     def random_direction(self, move_options):
         direction_options = []                                                      # Start with no options
-        safe_options = []                                                           # and no safe options
-        curr_path = self.current_path                                               # Get Current Path
+        safe_options = []                                                           # and no safe options.
         for proposed_dir in move_options:                                           # For a given direction,
             proposed_pos = self.position + self.moves[proposed_dir]                 # get the resultant position.
             if 0 <= proposed_pos[0] <= 5 and 0 <= proposed_pos[1] <= 5:             # If that is a valid position,
                 safe_options.append(proposed_dir)                                   # add it to safe options,
                 indicator = True
-                for element in curr_path:                                           # Of the visited cells,
+                for element in self.current_path:                                   # Of the visited cells,
                     if all(element == proposed_pos):                                # if the proposed move is not new,
                         indicator = False                                           # it is a visited cell.
                 if indicator:                                                       # If it is unvisited,
@@ -185,7 +186,7 @@ class Robot:
             'right': self.position + self.moves['right']
         }
 
-        self.check_error()                                                          # Error rates from prompt
+        # self.check_error()                                                          # Error rates from prompt
 
         for sensor in self.surroundings:
             try:                                                                    # Wall finding, shows empty cell
@@ -196,9 +197,11 @@ class Robot:
             except IndexError:
                 self.surroundings[sensor] = '*'
 
+        self.check_error()
+
     def check_error(self):
         false_pos = random.randint(1, 100)                                          # Generate each type of error
-        false_neg = random.randint(1, 100)
+        false_neg = random.randint(1, 100)                                          # Error rates from prompt
 
         if false_pos <= self.false_positive_rate:                                   # False positive
             self.surroundings[random.choice(list(self.surroundings))] = 'fake'      # Places a random fake "shelf"
@@ -217,11 +220,15 @@ class Robot:
             for direction, value in self.surroundings.items():                      # For random protocol:
                 if not self.adjacent:                                               # If a target has not been found,
                     if value == 'fake':                                             # If there is a false positive
-                        self.surroundings[direction] = wh.fake_shelf(self.warehouse)    # Generate a fake shelf
+                        fake = wh.fake_shelf(self.warehouse)                        # Generate a fake shelf
+                        self.surroundings[direction] = fake
+                        value = fake
                     for item in self.orders:                                        # Otherwise, check for targets
                         if item == value and item not in self.items:                # If there is a valid target
-                            self.adjacent = True                                    # Change indicator to True,
-                            self.next_dir = direction                               # Choose that target,
+                            proposed_pos = self.position + self.moves[direction]
+                            if 0 <= proposed_pos[0] <= 5 and 0 <= proposed_pos[1] <= 5:
+                                self.adjacent = True                                # Change indicator to True,
+                                self.next_dir = direction                           # Choose that target,
                             break                                                   # and stop looking
 
     def retrieve(self, item, environment):
