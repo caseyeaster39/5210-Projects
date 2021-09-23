@@ -48,7 +48,7 @@ def map_initialize(warehouse):
             'P': [4, 0],
             'Q': [5, 4],
         }
-    empty_arr = np.array([['*' for i in range(6)] for j in range(6)])
+    empty_arr = np.array([['*' for _ in range(6)] for _ in range(6)])
 
     # Each time loop runs "letter is different key from dict.
     for letter, (x_pos, y_pos) in coord_dict.items():    # "letter" represents key of dictionary.
