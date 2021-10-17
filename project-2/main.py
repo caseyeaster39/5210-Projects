@@ -3,7 +3,7 @@ from warehouse import Warehouse
 
 
 def main():
-    orders = Order()
+    order = Order()
     wh = Warehouse()
     # TODO: generate nested tree
     # TODO: IDS

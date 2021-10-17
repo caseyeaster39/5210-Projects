@@ -3,8 +3,22 @@ import random
 
 
 def random_alpha():
-    letter = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O']
-    return random.sample(letter, 1)
+    letters = ['A',
+              'B',
+              'C',
+              'D',
+              'E',
+              'F',
+              'G',
+              'H',
+              'I',
+              'J',
+              'K',
+              'L',
+              'M',
+              'N',
+              'O']
+    return random.sample(letters, 1)
 
 
 class Order:

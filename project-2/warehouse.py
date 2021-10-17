@@ -1,3 +1,4 @@
+# WAREHOUSE MAIN FLOOR
 class Node:
     def __init__(self, num, is_parent, left=None, right=None):
         self.name = chr(ord('@') + num)
