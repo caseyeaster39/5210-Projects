@@ -36,6 +36,7 @@ def floor_gen():
     node_list.append(Node(9, is_parent=False))
     node_list.append(Node(10, is_parent=False))
     node_list.append(Node(11, is_parent=False))
+    node_list.append(Node(12, is_parent=False))
     node_list.append(Node(13, is_parent=False))
     node_list.append(Node(14, is_parent=False))
     node_list.append(Node(15, is_parent=False))

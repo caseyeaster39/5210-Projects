@@ -9,9 +9,16 @@ class Agent:
             'warehouse': 1,
             'div': 1
         }
-        self.score = 0
         self.wh = Warehouse()
         self.div = Division()
+
+        # Scoring
+        self.score = 0
+        self.num_runs = 0
+        self.cumulative_score = 0
+        self.average_score = 0
+        self.max_score = 0
+        self.min_score = float('inf')
 
     def protocol(self, rand=True, shelves=None, div=None, printouts=False):
         self.order = Order(rand, shelves, div)
@@ -19,8 +26,9 @@ class Agent:
         self.div_search(self.order.shelves, printouts)
         if printouts:
             print("Returning to Warehouse")
+            print(f'Final Score: {self.score}')
         else:
-            print(self.score)
+            self.scoring_func()
 
     def wh_search(self, target_node, printouts):
         target_path = path_merge(self.location['warehouse'], target_node)
@@ -96,3 +104,20 @@ class Agent:
 
     def go_home(self, printouts):
         self.move(path_trace(self.location['div'], reverse=False), loc='div', printouts=printouts)
+
+    def scoring_func(self):
+        self.num_runs += 1
+        self.cumulative_score += self.score
+        self.max_score = self.score if self.max_score < self.score else self.max_score
+        self.min_score = self.score if self.min_score > self.score else self.min_score
+        self.average_score = (self.cumulative_score + self.score) / self.num_runs
+
+        print('##########################################')
+        print(f'Score this run: \t{self.score}\n')
+        print(f'Average Score: \t\t{self.average_score}')
+        print(f'Cumulative Score: \t{self.cumulative_score}')
+        print(f'Max Score: \t\t\t{self.max_score}')
+        print(f'Min Score: \t\t\t{self.min_score}')
+        print('##########################################')
+
+        self.score = 0
