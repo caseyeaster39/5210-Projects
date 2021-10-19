@@ -1,10 +1,11 @@
+# NODE CREATION
 class Node:
     def __init__(self, data):
         self.left_child = None
         self.right_child = None
         self.data = data
 
-# NODE CREATION
+
 i = 1
 while i <= 63 // 2:
     child_nodes = []
