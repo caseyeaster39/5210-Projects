@@ -14,11 +14,12 @@ class Agent:
 
         # Scoring
         self.score = 0
-        self.num_runs = 0
         self.cumulative_score = 0
         self.average_score = 0
-        self.max_score = 0
-        self.min_score = float('inf')
+        self.num_runs = 0
+        self.step_count = 0
+        self.max_path = float('-inf')
+        self.min_path = float('inf')
 
     def protocol(self, rand=True, shelves=None, div=None, printouts=False):
         self.order = Order(rand, shelves, div)
@@ -26,7 +27,10 @@ class Agent:
         self.div_search(self.order.shelves, printouts)
         if printouts:
             print("Returning to Warehouse")
-            print(f'Final Score: {self.score}')
+            print(f'Final Score: \t{self.score}')
+            print(f'Final Step Count: {self.score}')
+            self.score = 0
+            self.step_count = 0
         else:
             self.scoring_func()
 
@@ -51,6 +55,7 @@ class Agent:
     def move(self, path, loc, printouts):
         current_tree = self.wh.node_list if loc == 'warehouse' else self.div.node_list
         for step in path:
+            self.step_count += 1
             current_node = current_tree[self.location[loc] - 1]
             if step == self.location[loc]:
                 continue
@@ -108,16 +113,17 @@ class Agent:
     def scoring_func(self):
         self.num_runs += 1
         self.cumulative_score += self.score
-        self.max_score = self.score if self.max_score < self.score else self.max_score
-        self.min_score = self.score if self.min_score > self.score else self.min_score
+        self.max_path = self.step_count if self.max_path < self.step_count else self.max_path
+        self.min_path = self.step_count if self.min_path > self.step_count else self.min_path
         self.average_score = (self.cumulative_score + self.score) / self.num_runs
 
         print('##########################################')
-        print(f'Score this run: \t{self.score}\n')
-        print(f'Average Score: \t\t{self.average_score}')
-        print(f'Cumulative Score: \t{self.cumulative_score}')
-        print(f'Max Score: \t\t\t{self.max_score}')
-        print(f'Min Score: \t\t\t{self.min_score}')
+        print(f'Score this run: \t{self.score}')
+        print(f'Average Score: \t\t{round(self.average_score, 2)}\n')
+
+        print(f'Max Step Count: \t{self.max_path}')
+        print(f'Min Step Count: \t{self.min_path}')
         print('##########################################')
 
         self.score = 0
+        self.step_count = 0
