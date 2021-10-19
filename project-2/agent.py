@@ -15,17 +15,17 @@ class Agent:
         # Scoring
         self.score = 0
         self.cumulative_score = 0
-        self.average_score = 0
         self.num_runs = 0
         self.step_count = 0
+        self.cumulative_steps = 0
         self.max_path = float('-inf')
         self.min_path = float('inf')
 
-    def protocol(self, rand=True, shelves=None, div=None, printouts=False):
+    def protocol(self, rand=True, shelves=None, div=None, single_run=False):
         self.order = Order(rand, shelves, div)
-        self.wh_search(self.order.div, printouts)
-        self.div_search(self.order.shelves, printouts)
-        if printouts:
+        self.wh_search(self.order.div, single_run)
+        self.div_search(self.order.shelves, single_run)
+        if single_run:
             print("Returning to Warehouse")
             print(f'Final Score: \t{self.score}')
             print(f'Final Step Count: {self.score}')
@@ -34,11 +34,11 @@ class Agent:
         else:
             self.scoring_func()
 
-    def wh_search(self, target_node, printouts):
+    def wh_search(self, target_node, single_run):
         target_path = path_merge(self.location['warehouse'], target_node)
-        self.move(target_path, loc='warehouse', printouts=printouts)
+        self.move(target_path, loc='warehouse', single_run=single_run)
 
-    def div_search(self, shelves, printouts):
+    def div_search(self, shelves, single_run):
         agent_path = path_trace(self.location['div'])
 
         targets = self.id_search(shelves)
@@ -46,13 +46,13 @@ class Agent:
 
         while len(target_paths) > 0:
             this_path = target_paths[0]
-            self.move(this_path, loc='div', printouts=printouts)
+            self.move(this_path, loc='div', single_run=single_run)
             agent_path = path_trace(self.location['div'])
             del targets[f'{this_path[-1]}']
             target_paths = path_forger(targets, agent_path)
-        self.go_home(printouts)
+        self.go_home(single_run)
 
-    def move(self, path, loc, printouts):
+    def move(self, path, loc, single_run):
         current_tree = self.wh.node_list if loc == 'warehouse' else self.div.node_list
         for step in path:
             self.step_count += 1
@@ -65,7 +65,7 @@ class Agent:
             else:
                 next_node = self.wh.node_list[step - 1]
                 self.score_calc(current_node, next_node)
-            if printouts:
+            if single_run:
                 print(f'Moved to {self.location[loc]} in {loc}, current score: {self.score}')
 
     def score_calc(self, node1, node2):
@@ -107,20 +107,27 @@ class Agent:
         frontier.append(self.div.node_list[right_index])
         frontier.append(self.div.node_list[left_index])
 
-    def go_home(self, printouts):
-        self.move(path_trace(self.location['div'], reverse=False), loc='div', printouts=printouts)
+    def go_home(self, single_run):
+        self.move(
+            path_trace(self.location['div'], reverse=False),
+            loc='div', single_run=single_run
+        )
 
     def scoring_func(self):
         self.num_runs += 1
         self.cumulative_score += self.score
+        self.cumulative_steps += self.step_count
+        average_score = (self.cumulative_score + self.score) / self.num_runs
+
+        average_steps = (self.cumulative_steps + self.step_count) / self.num_runs
         self.max_path = self.step_count if self.max_path < self.step_count else self.max_path
         self.min_path = self.step_count if self.min_path > self.step_count else self.min_path
-        self.average_score = (self.cumulative_score + self.score) / self.num_runs
 
         print('##########################################')
         print(f'Score this run: \t{self.score}')
-        print(f'Average Score: \t\t{round(self.average_score, 2)}\n')
+        print(f'Average Score: \t\t{round(average_score, 2)}\n')
 
+        print(f'Avg. Step Count: \t{round(average_steps, 2)}')
         print(f'Max Step Count: \t{self.max_path}')
         print(f'Min Step Count: \t{self.min_path}')
         print('##########################################')
