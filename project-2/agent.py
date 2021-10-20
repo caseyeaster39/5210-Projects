@@ -134,7 +134,7 @@ class Agent:
         print(f'Score this run: \t{self.score}')
         print(f'Average Score: \t\t{round(average_score, 2)}\n')
 
-        print(f'Avg. Step Count: \t{round(average_steps)}')
+        print(f'Avg Step Count: \t{round(average_steps)}')
         print(f'Max Step Count: \t{self.max_path}')
         print(f'Min Step Count: \t{self.min_path}')
         print('##########################################')
