@@ -25,7 +25,7 @@ def display_results(robot):
 
         # Window title info
         info = ', press any key to continue...'
-        caption = f'Best Score: {robot.max_path}{info}' if window == 0 else f'Worst Score: {robot.min_path}{info}'
+        caption = f'Best Score: {robot.max_score}{info}' if window == 0 else f'Worst Score: {robot.min_score}{info}'
         pygame.display.set_caption(f'{caption}')
 
         # More setup
@@ -82,10 +82,10 @@ def report_printout(robot):
     print(f'Average Score: {round(robot.avg_score, 3)}')                                # Print results
     print(f'Avg. Brute Force Score: {round(robot.baseline_score_avg, 3)}\n')
 
-    print(f'Maximum Score: {robot.max_path}')
+    print(f'Maximum Score: {robot.max_score}')
     print(f'Corresponding Brute Force Score: {robot.baseline_score_max}\n')
 
-    print(f'Minimum Score: {robot.min_path}')
+    print(f'Minimum Score: {robot.min_score}')
     print(f'Corresponding Brute Force Score: {robot.baseline_score_min}')
     print('\n##############################\n')
 
