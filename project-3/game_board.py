@@ -42,7 +42,7 @@ def play_game(max_starts=True):
 
     symbols = {
         'X': char_font.render('X', True, MAX_COLOR),
-        'O': char_font.render('Y', True, MIN_COLOR)
+        'O': char_font.render('O', True, MIN_COLOR)
     }
 
     print("\n####################")
